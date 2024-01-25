@@ -33,7 +33,7 @@ fn main() {
     let mut assembled_image = DynamicImage::ImageRgba8(image::ImageBuffer::new(final_width, final_height));
     let mut x_offset = 0;
     let mut y_offset = 0;
-    let mut cnt = 0;
+    // let mut cnt = 0;
     for img in &images {
         if img.dimensions().0 == 1 && img.dimensions().1 ==1 {
             img_for_share.retain(|i| i != img);
@@ -41,7 +41,7 @@ fn main() {
         }
         let img = find_best_solution(&input_image,x_offset,y_offset, &img_for_share.clone());
         imageops::overlay(&mut assembled_image, &img, x_offset, y_offset);
-        cnt+=1;
+        // cnt+=1;
         // println!("IMAGE NUMBER:{}",cnt);
         // println!("X_OFFSET:{}",x_offset);
         // println!("Y_OFFSET:{}",y_offset);
@@ -66,18 +66,18 @@ fn main() {
     
 }
 
-fn find_best_solution(initImage:&DynamicImage,x_offset:u32,y_offset:u32, images: &Vec<DynamicImage>)->DynamicImage{
-    let mut best_solutin = calculate_total_diff(&initImage,x_offset,y_offset,&images[0]);
-    let mut retVal = &images[0];
+fn find_best_solution(init_image:&DynamicImage,x_offset:u32,y_offset:u32, images: &Vec<DynamicImage>)->DynamicImage{
+    let mut best_solutin = calculate_total_diff(&init_image,x_offset,y_offset,&images[0]);
+    let mut retval = &images[0];
     for img in images.iter() {
-        let tmp = calculate_total_diff(&initImage,x_offset,y_offset,&img);
+        let tmp = calculate_total_diff(&init_image,x_offset,y_offset,&img);
         if tmp < best_solutin {
             best_solutin = tmp;
-            retVal =  img;
+            retval =  img;
         }
     }
 
-    retVal.clone()
+    retval.clone()
 }
 
 fn calculate_total_diff(init_image:&DynamicImage,x_offset:u32,y_offset:u32,target_image:&DynamicImage)->f32{
