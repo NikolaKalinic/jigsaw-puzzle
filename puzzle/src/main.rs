@@ -35,6 +35,10 @@ fn main() {
     let mut y_offset = 0;
     let mut cnt = 0;
     for img in &images {
+        if img.dimensions().0 == 1 && img.dimensions().1 ==1 {
+            img_for_share.retain(|i| i != img);
+            continue;
+        }
         let img = find_best_solution(&input_image,x_offset,y_offset, &img_for_share.clone());
         imageops::overlay(&mut assembled_image, &img, x_offset, y_offset);
         cnt+=1;
@@ -43,10 +47,10 @@ fn main() {
         // println!("Y_OFFSET:{}",y_offset);
         // println!("-----------------------");
         img_for_share.retain(|i| i != &img);
-        if x_offset + img.dimensions().0 <= final_width-10 {
+        if x_offset + img.dimensions().0 <= final_width - 10{
             x_offset += img.dimensions().0; 
         }else{
-            if y_offset + img.dimensions().1 <= final_height{
+            if y_offset + img.dimensions().1 <= final_height - 10{
                 y_offset += img.dimensions().1;
                 x_offset = 0;
             }else{
