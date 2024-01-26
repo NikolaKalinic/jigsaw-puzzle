@@ -1,5 +1,7 @@
 extern crate image;
 use std::env;
+use rayon::prelude::*;
+use std::time::Instant;
 
 use image::{GenericImageView, DynamicImage, imageops};
 use image::Rgba;
@@ -624,16 +626,21 @@ fn get_images(str:&str) -> Vec<DynamicImage>{
         ],
         _ => println!("Wrong input for load images."),
     }
-
-    let mut images: Vec<DynamicImage> = Vec::new();
-    for path in image_paths {
-        if let Ok(img) = image::open(path) {
-            images.push(img);
-        } else {
-            eprintln!("Error loading image: {}", path);
-        }
-    }
-    
+    let start_time = Instant::now();
+    let images: Vec<DynamicImage> = image_paths
+        .par_iter()
+        .filter_map(|&path| {
+            match image::open(path) {
+                Ok(img) => Some(img),
+                Err(_) => {
+                    eprintln!("Error loading image: {}", path);
+                    None
+                }
+            }
+        })
+        .collect();
+    let elapsed_time = start_time.elapsed();
+    println!("Time taken: {:?}", elapsed_time);
     if images.is_empty() {
         eprintln!("No valid images found.");
     }
