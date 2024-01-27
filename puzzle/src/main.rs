@@ -25,17 +25,17 @@ fn main() {
         final_image = String::from("5");
     }
 
+    let start_time = Instant::now();
 
     let input_image = image::open(format!("../examples/picture{}.jpg",final_image)).expect("Failed to load the input image.");
     let images = get_images(&args[1]);
     let mut img_for_share = images.clone();
-    println!("DUZINA NIZA JE {}",images.len());
+    println!("Length {} images.",images.len());
 
     let (final_width, final_height) = input_image.dimensions();
     let mut assembled_image = DynamicImage::ImageRgba8(image::ImageBuffer::new(final_width, final_height));
     let mut x_offset = 0;
     let mut y_offset = 0;
-    // let mut cnt = 0;
     for img in &images {
         if img.dimensions().0 == 1 && img.dimensions().1 ==1 {
             img_for_share.retain(|i| i != img);
@@ -43,11 +43,6 @@ fn main() {
         }
         let img = find_best_solution(&input_image,x_offset,y_offset, &img_for_share.clone());
         imageops::overlay(&mut assembled_image, &img, x_offset, y_offset);
-        // cnt+=1;
-        // println!("IMAGE NUMBER:{}",cnt);
-        // println!("X_OFFSET:{}",x_offset);
-        // println!("Y_OFFSET:{}",y_offset);
-        // println!("-----------------------");
         img_for_share.retain(|i| i != &img);
         if x_offset + img.dimensions().0 <= final_width - 10{
             x_offset += img.dimensions().0; 
@@ -60,45 +55,57 @@ fn main() {
                 y_offset = final_height - img.dimensions().1;
             }
         }
-        
     }
+    let elapsed_time = start_time.elapsed();
+    println!("Time taken: {:?}", elapsed_time);
+
     if let Err(err) = assembled_image.save("./result.png") {
         eprintln!("Error saving assembled image: {}", err);
     }
     
 }
 
-fn find_best_solution(init_image:&DynamicImage,x_offset:u32,y_offset:u32, images: &Vec<DynamicImage>)->DynamicImage{
-    let mut best_solutin = calculate_total_diff(&init_image,x_offset,y_offset,&images[0]);
-    let mut retval = &images[0];
-    for img in images.iter() {
-        let tmp = calculate_total_diff(&init_image,x_offset,y_offset,&img);
-        if tmp < best_solutin {
-            best_solutin = tmp;
-            retval =  img;
-        }
-    }
+fn find_best_solution(init_image: &DynamicImage, x_offset: u32, y_offset: u32, images: &Vec<DynamicImage>) -> DynamicImage {
+    let (best_solution, _) = images.par_iter()  // Use par_iter() for parallel iteration
+        .map(|img| {
+            let diff = calculate_total_diff(&init_image, x_offset, y_offset, &img);
+            (img, diff)
+        })
+        .reduce(|| (&images[0], f32::INFINITY), |acc, x| {
+            if x.1 < acc.1 {
+                (x.0, x.1)
+            } else {
+                acc
+            }
+        });
 
-    retval.clone()
+    best_solution.clone()
 }
 
-fn calculate_total_diff(init_image:&DynamicImage,x_offset:u32,y_offset:u32,target_image:&DynamicImage)->f32{
-    let mut total_sum:f32 = 0.0;
-    for y in 0..target_image.dimensions().1{
-        for x in 0..target_image.dimensions().0{
-            total_sum += euclidean_distance(&init_image.get_pixel(x_offset+x, y_offset+y),&target_image.get_pixel(x, y))
-        } 
-    }
+fn calculate_total_diff(init_image: &DynamicImage, x_offset: u32, y_offset: u32, target_image: &DynamicImage) -> f32 {
+    let total_sum: f32 = (0..target_image.dimensions().1)
+        .into_par_iter()  // Parallelize the outer loop
+        .map(|y| {
+            (0..target_image.dimensions().0)
+                .map(|x| {
+                    euclidean_distance(
+                        &init_image.get_pixel(x_offset + x, y_offset + y),
+                        &target_image.get_pixel(x, y),
+                    )
+                })
+                .sum::<f32>()
+        })
+        .sum();
+
     total_sum
 }
-
 
 fn euclidean_distance(pixel1: &Rgba<u8>, pixel2: &Rgba<u8>) -> f32 {
     ((pixel1[0] as f32 - pixel2[0] as f32).powi(2)
         + (pixel1[1] as f32 - pixel2[1] as f32).powi(2)
         + (pixel1[2] as f32 - pixel2[2] as f32).powi(2)
         + (pixel1[3] as f32 - pixel2[3] as f32).powi(2))
-    .sqrt()
+        .sqrt()
 }
 
 
@@ -626,7 +633,7 @@ fn get_images(str:&str) -> Vec<DynamicImage>{
         ],
         _ => println!("Wrong input for load images."),
     }
-    let start_time = Instant::now();
+    // let start_time = Instant::now();
     let images: Vec<DynamicImage> = image_paths
         .par_iter()
         .filter_map(|&path| {
@@ -639,8 +646,8 @@ fn get_images(str:&str) -> Vec<DynamicImage>{
             }
         })
         .collect();
-    let elapsed_time = start_time.elapsed();
-    println!("Time taken: {:?}", elapsed_time);
+    // let elapsed_time = start_time.elapsed();
+    // println!("Time taken: {:?}", elapsed_time);
     if images.is_empty() {
         eprintln!("No valid images found.");
     }
