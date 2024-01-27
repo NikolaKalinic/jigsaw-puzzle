@@ -10,7 +10,7 @@ The approach to solving the puzzle image assembly problem is based on an algorit
 - **Loading the Final Image:** The first step of the algorithm involves loading the target image, which serves as the reference point for reconstruction. This image acts as the foundation for creating the end result.
 - **Loading Other Parts (Puzzle Pieces):** After loading the final image, the algorithm needs to load other images into a vector, providing an excellent opportunity for parallelization, which will be discussed later.
 - **Initializing an Empty Image:** Based on the dimensions of the final image, the algorithm creates an empty image that will eventually represent the assembled result. This empty image initially has no information, and the goal is to gradually fill it with smaller pieces.
-- **Finding the Best Puzzle for Each Position: ** The algorithm then traverses the original image, analyzing each position to find the best matching piece. This process relies on calculating the Euclidean distance.
+- **Finding the Best Puzzle for Each Position:** The algorithm then traverses the original image, analyzing each position to find the best matching piece. This process relies on calculating the Euclidean distance.
 - **Placing Puzzles on the Empty Image:** Once the appropriate puzzle is found, the algorithm places it in the corresponding position on the empty image. After placement, the puzzle is removed from the vector of all puzzles to avoid reuse.
 - **Iterative Process:** This process repeats until all puzzles are placed on the empty image, adhering to the selective removal of puzzles from the vector to ensure each puzzle is used only once.
 ## 3. Getting Started
